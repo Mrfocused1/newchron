@@ -112,6 +112,42 @@ body {
 			<div id="status-notice"></div>
 		</div>
 
+		<script>
+// Redirect large game files to GitHub releases
+// This ensures the game works even when Git LFS files aren't available locally
+(function() {
+	const RELEASE_URL = "https://github.com/Mrfocused1/newchron/releases/download/v1.0/";
+	const LARGE_FILES = ['index.pck', 'index.wasm'];
+
+	const originalFetch = window.fetch;
+	window.fetch = function(url, options) {
+		if (typeof url === 'string') {
+			for (const file of LARGE_FILES) {
+				if (url.endsWith(file) || url.endsWith('/' + file)) {
+					console.log('Redirecting ' + file + ' to GitHub release');
+					return originalFetch(RELEASE_URL + file, options);
+				}
+			}
+		}
+		return originalFetch(url, options);
+	};
+
+	// Also intercept XMLHttpRequest for older loading methods
+	const originalXHROpen = XMLHttpRequest.prototype.open;
+	XMLHttpRequest.prototype.open = function(method, url, ...args) {
+		if (typeof url === 'string') {
+			for (const file of LARGE_FILES) {
+				if (url.endsWith(file) || url.endsWith('/' + file)) {
+					console.log('Redirecting XHR ' + file + ' to GitHub release');
+					url = RELEASE_URL + file;
+					break;
+				}
+			}
+		}
+		return originalXHROpen.call(this, method, url, ...args);
+	};
+})();
+		</script>
 		<script src="index.js"></script>
 		<script>
 const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":666451416,"index.wasm":36145869},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
