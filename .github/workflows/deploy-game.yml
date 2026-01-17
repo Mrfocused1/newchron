@@ -1,0 +1,42 @@
+name: Deploy Game Files
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout with LFS
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Pull LFS files
+        run: git lfs pull
+
+      - name: Verify files
+        run: |
+          echo "Checking file sizes..."
+          ls -la index.pck index.wasm
+          echo "index.pck size: $(stat -c%s index.pck)"
+          echo "index.wasm size: $(stat -c%s index.wasm)"
+
+      - name: Create or Update Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v1.0
+          name: Game Data v1.0
+          body: |
+            Game binary files for web deployment.
+
+            These files are automatically updated when the main branch is updated.
+          files: |
+            index.pck
+            index.wasm
+          fail_on_unmatched_files: true
